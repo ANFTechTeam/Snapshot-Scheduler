@@ -48,7 +48,7 @@ Once set the Logic App will takeover the scheduling and rotation of the Snapshot
 ### 
 ### 
 
-## Replace the code from the Logic app code view, section with the code in github (https://github.com/ANFTechTeam/Snapshot-Scheduler/SnapshotCode.git)
+## Replace the code from the Logic app code view, section with the code in github ( https://github.com/ANFTechTeam/Snapshot-Scheduler/blob/main/SnapshotCode.git )  
 
 <img width="1331" alt="Replace Code fromGithub" src="https://github.com/ANFTechTeam/Snapshot-Scheduler/assets/63759009/aa989166-05e1-43d6-9ceb-6e7c5c4c957c">
 
