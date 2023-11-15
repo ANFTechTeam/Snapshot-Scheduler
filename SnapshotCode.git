@@ -1,0 +1,975 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Check_for_final_job_status_and_report_status": {
+                "actions": {
+                    "Terminate": {
+                        "inputs": {
+                            "runStatus": "Succeeded"
+                        },
+                        "runAfter": {},
+                        "type": "Terminate"
+                    }
+                },
+                "else": {
+                    "actions": {
+                        "Terminate_and_report_error": {
+                            "inputs": {
+                                "runError": {
+                                    "code": "201",
+                                    "message": "@variables('errorMessage')"
+                                },
+                                "runStatus": "Failed"
+                            },
+                            "runAfter": {},
+                            "type": "Terminate"
+                        }
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@variables('stateOK')",
+                                true
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "For_each_ANF_volume_-_Create_SnapShot_and_CleanUp_Excess_Snapshots": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "If"
+            },
+            "For_each_ANF_volume_-_Create_SnapShot_and_CleanUp_Excess_Snapshots": {
+                "actions": {
+                    "HTTP_-_Create_Snapshot_on_Volume": {
+                        "inputs": {
+                            "authentication": {
+                                "type": "ManagedServiceIdentity"
+                            },
+                            "body": {
+                                "location": "@items('For_each_ANF_volume_-_Create_SnapShot_and_CleanUp_Excess_Snapshots')?['location']"
+                            },
+                            "method": "PUT",
+                            "uri": "https://management.azure.com/@{items('For_each_ANF_volume_-_Create_SnapShot_and_CleanUp_Excess_Snapshots')?['id']}/snapshots/@{variables('snapshotName')}?api-version=2023-07-01"
+                        },
+                        "runAfter": {},
+                        "type": "Http"
+                    },
+                    "Handle_Snapshot_Cleanup_if_Snapshot_Created_Successfully": {
+                        "actions": {
+                            "Condition_-_Check_if_snapshots_exceed_retention": {
+                                "actions": {
+                                    "Set_variable_-_Clear_snapshotIndex": {
+                                        "inputs": {
+                                            "name": "snapshotIndex",
+                                            "value": 0
+                                        },
+                                        "runAfter": {
+                                            "Set_variable_-_Clear_snapshotNameToDelete": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "SetVariable"
+                                    },
+                                    "Set_variable_-_Clear_snapshotNameToDelete": {
+                                        "inputs": {
+                                            "name": "snapshotNameToDelete",
+                                            "value": "\"\""
+                                        },
+                                        "runAfter": {
+                                            "Set_variable_-_numSnapshotToDelete": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "SetVariable"
+                                    },
+                                    "Set_variable_-_numSnapshotToDelete": {
+                                        "inputs": {
+                                            "name": "numSnapshotToDelete",
+                                            "value": "@min(variables('maxSnapshotsToDeletePerExecution'),sub(length(variables('scopedSnapshotArray')),variables('snapshotRetention')))"
+                                        },
+                                        "runAfter": {},
+                                        "type": "SetVariable"
+                                    },
+                                    "Until": {
+                                        "actions": {
+                                            "Decrement_variable": {
+                                                "inputs": {
+                                                    "name": "numSnapshotToDelete",
+                                                    "value": 1
+                                                },
+                                                "runAfter": {
+                                                    "HTTP_-_Delete_SnapShot": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "DecrementVariable"
+                                            },
+                                            "HTTP_-_Delete_SnapShot": {
+                                                "inputs": {
+                                                    "authentication": {
+                                                        "type": "ManagedServiceIdentity"
+                                                    },
+                                                    "method": "DELETE",
+                                                    "uri": "https://management.azure.com/@{variables('snapshotNameToDelete')}?api-version=2023-07-01"
+                                                },
+                                                "runAfter": {
+                                                    "Set_variable_-_snapShotNameToDelete": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "Http"
+                                            },
+                                            "Increment_variable": {
+                                                "inputs": {
+                                                    "name": "snapshotIndex",
+                                                    "value": 1
+                                                },
+                                                "runAfter": {
+                                                    "Decrement_variable": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "IncrementVariable"
+                                            },
+                                            "Set_variable_-_snapShotNameToDelete": {
+                                                "inputs": {
+                                                    "name": "snapshotNameToDelete",
+                                                    "value": "@{variables('scopedSnapshotArray')[variables('snapshotIndex')]}"
+                                                },
+                                                "runAfter": {},
+                                                "type": "SetVariable"
+                                            }
+                                        },
+                                        "expression": "@lessOrEquals(variables('numSnapshotToDelete'), 0)",
+                                        "limit": {
+                                            "count": 4,
+                                            "timeout": "PT1H"
+                                        },
+                                        "runAfter": {
+                                            "Set_variable_-_Clear_snapshotIndex": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "Until"
+                                    }
+                                },
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "greater": [
+                                                "@length(variables('scopedSnapshotArray'))",
+                                                "@variables('snapshotRetention')"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "runAfter": {
+                                    "Set_variable_-_Set_in_scope_snapshots_only": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "If"
+                            },
+                            "Filter_array_-_Scope_snapshot_actions_to_matching_scheduler_prefix_only": {
+                                "inputs": {
+                                    "from": "@variables('snapshotArray')",
+                                    "where": "@contains(item(), variables('snapshotPrefix'))"
+                                },
+                                "runAfter": {
+                                    "For_each_Snapshot": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "Query"
+                            },
+                            "For_each_Snapshot": {
+                                "actions": {
+                                    "Append_to_array_variable": {
+                                        "inputs": {
+                                            "name": "snapshotArray",
+                                            "value": "@items('For_each_Snapshot')?['id']"
+                                        },
+                                        "runAfter": {},
+                                        "type": "AppendToArrayVariable"
+                                    }
+                                },
+                                "foreach": "@body('Parse_JSON_-_Get_all_snapshots_on_target_volume2')?['value']",
+                                "runAfter": {
+                                    "Parse_JSON_-_Get_all_snapshots_on_target_volume2": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "Foreach"
+                            },
+                            "HTTP_-_Get_all_snapshots_on_target_volume": {
+                                "inputs": {
+                                    "authentication": {
+                                        "type": "ManagedServiceIdentity"
+                                    },
+                                    "method": "GET",
+                                    "uri": "https://management.azure.com/@{items('For_each_ANF_volume_-_Create_SnapShot_and_CleanUp_Excess_Snapshots')?['id']}/snapshots?api-version=2023-07-01"
+                                },
+                                "runAfter": {},
+                                "type": "Http"
+                            },
+                            "Parse_JSON_-_Get_all_snapshots_on_target_volume2": {
+                                "inputs": {
+                                    "content": "@body('HTTP_-_Get_all_snapshots_on_target_volume')",
+                                    "schema": {
+                                        "properties": {
+                                            "value": {
+                                                "items": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "location": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "properties": {
+                                                            "properties": {
+                                                                "created": {
+                                                                    "type": "string"
+                                                                },
+                                                                "provisioningState": {
+                                                                    "type": "string"
+                                                                },
+                                                                "snapshotId": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "type": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "location",
+                                                        "name",
+                                                        "properties",
+                                                        "type"
+                                                    ],
+                                                    "type": "object"
+                                                },
+                                                "type": "array"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "runAfter": {
+                                    "HTTP_-_Get_all_snapshots_on_target_volume": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "ParseJson"
+                            },
+                            "Set_variable_-_Clear_numSnapshotToDelete": {
+                                "inputs": {
+                                    "name": "numSnapshotToDelete",
+                                    "value": 0
+                                },
+                                "runAfter": {
+                                    "Condition_-_Check_if_snapshots_exceed_retention": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "SetVariable"
+                            },
+                            "Set_variable_-_Clear_scoped_snapshotsArray": {
+                                "inputs": {
+                                    "name": "scopedSnapshotArray",
+                                    "value": []
+                                },
+                                "runAfter": {
+                                    "Set_variable_-_Clear_numSnapshotToDelete": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "SetVariable"
+                            },
+                            "Set_variable_-_Set_in_scope_snapshots_only": {
+                                "inputs": {
+                                    "name": "scopedSnapshotArray",
+                                    "value": "@body('Filter_array_-_Scope_snapshot_actions_to_matching_scheduler_prefix_only')"
+                                },
+                                "runAfter": {
+                                    "Filter_array_-_Scope_snapshot_actions_to_matching_scheduler_prefix_only": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "SetVariable"
+                            }
+                        },
+                        "else": {
+                            "actions": {
+                                "Report_error_message_to_runtime": {
+                                    "inputs": {
+                                        "name": "errorMessage",
+                                        "value": "Snapshot generation failed on the following volume: @{items('For_each_ANF_volume_-_Create_SnapShot_and_CleanUp_Excess_Snapshots')}. Check the logs for more information"
+                                    },
+                                    "runAfter": {
+                                        "Report_error_status_to_runtime": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "SetVariable"
+                                },
+                                "Report_error_status_to_runtime": {
+                                    "inputs": {
+                                        "name": "stateOK",
+                                        "value": false
+                                    },
+                                    "runAfter": {},
+                                    "type": "SetVariable"
+                                }
+                            }
+                        },
+                        "expression": {
+                            "and": [
+                                {
+                                    "equals": [
+                                        "@outputs('HTTP_-_Create_Snapshot_on_Volume')['statusCode']",
+                                        201
+                                    ]
+                                }
+                            ]
+                        },
+                        "runAfter": {
+                            "HTTP_-_Create_Snapshot_on_Volume": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "If"
+                    },
+                    "Reset_SnapShot_Array": {
+                        "inputs": {
+                            "name": "snapshotArray",
+                            "value": []
+                        },
+                        "runAfter": {
+                            "Handle_Snapshot_Cleanup_if_Snapshot_Created_Successfully": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "SetVariable"
+                    }
+                },
+                "foreach": "@body('Parse_JSON')?['value']",
+                "runAfter": {
+                    "Parse_JSON": [
+                        "Succeeded"
+                    ]
+                },
+                "runtimeConfiguration": {
+                    "concurrency": {
+                        "repetitions": 1
+                    }
+                },
+                "type": "Foreach"
+            },
+            "HTTP": {
+                "inputs": {
+                    "authentication": {
+                        "type": "ManagedServiceIdentity"
+                    },
+                    "method": "GET",
+                    "uri": "https://management.azure.com/subscriptions/@{variables('subscriptionId')}/resourceGroups/@{variables('resourceGroup')}/providers/Microsoft.NetApp/netAppAccounts/@{variables('netappAccount')}/capacityPools/@{variables('capacityPool')}/volumes?api-version=2023-07-01"
+                },
+                "runAfter": {
+                    "Initialize_variable_-_snapshotIndex": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Http"
+            },
+            "Initialize_variable_-_Scoped_Snapshot_Array_-_[DO_NOT_EDIT]": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "scopedSnapshotArray",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_-_Snapshot_Array_-_[DO_NOT_EDIT]": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_-_Snapshot_Array_-_[DO_NOT_EDIT]": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "snapshotArray",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_-_firstSnapshot_[DO_NOT_EDIT]": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_-_errorMessage_[DO_NOT_EDIT]": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "errorMessage",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_-_state_[DO_NOT_EDIT]": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_-_firstSnapshot_[DO_NOT_EDIT]": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "snapshotItem",
+                            "type": "integer",
+                            "value": 0
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "User_Configuration_-_Snapshot_Retention": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_-_maxSnapshotsToDeletePerExecution": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "maxSnapshotsToDeletePerExecution",
+                            "type": "integer",
+                            "value": 6
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_-_numSnapshotToDelete": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_-_numSnapshotToDelete": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "numSnapshotToDelete",
+                            "type": "integer",
+                            "value": 0
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_-_snapshotName_[DO_NOT_EDIT]": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_-_snapshotIndex": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "snapshotIndex",
+                            "type": "integer",
+                            "value": 0
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_-_snapshotNameToDelete": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_-_snapshotNameToDelete": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "snapshotNameToDelete",
+                            "type": "string",
+                            "value": "\"\""
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_-_maxSnapshotsToDeletePerExecution": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_-_snapshotName_[DO_NOT_EDIT]": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "snapshotName",
+                            "type": "string",
+                            "value": "@{variables('snapshotPrefix')}-@{ticks(utcNow())}"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_-_errorMessage_[DO_NOT_EDIT]": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_-_state_[DO_NOT_EDIT]": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "stateOK",
+                            "type": "boolean",
+                            "value": true
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_-_Scoped_Snapshot_Array_-_[DO_NOT_EDIT]": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Parse_JSON": {
+                "inputs": {
+                    "content": "@body('HTTP')",
+                    "schema": {
+                        "properties": {
+                            "value": {
+                                "items": {
+                                    "properties": {
+                                        "etag": {
+                                            "type": "string"
+                                        },
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "location": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "properties": {
+                                            "properties": {
+                                                "actualThroughputMibps": {
+                                                    "type": "number"
+                                                },
+                                                "avsDataStore": {
+                                                    "type": "string"
+                                                },
+                                                "baremetalTenantId": {
+                                                    "type": "string"
+                                                },
+                                                "coolAccess": {
+                                                    "type": "boolean"
+                                                },
+                                                "creationToken": {
+                                                    "type": "string"
+                                                },
+                                                "defaultGroupQuotaInKiBs": {
+                                                    "type": "integer"
+                                                },
+                                                "defaultUserQuotaInKiBs": {
+                                                    "type": "integer"
+                                                },
+                                                "deleteBaseSnapshot": {
+                                                    "type": "boolean"
+                                                },
+                                                "enableSubvolumes": {
+                                                    "type": "string"
+                                                },
+                                                "encryptionKeySource": {
+                                                    "type": "string"
+                                                },
+                                                "exportPolicy": {
+                                                    "properties": {
+                                                        "rules": {
+                                                            "items": {
+                                                                "properties": {
+                                                                    "allowedClients": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "chownMode": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "cifs": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "hasRootAccess": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "kerberos5ReadOnly": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "kerberos5ReadWrite": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "kerberos5iReadOnly": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "kerberos5iReadWrite": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "kerberos5pReadOnly": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "kerberos5pReadWrite": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "nfsv3": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "nfsv41": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "ruleIndex": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "unixReadOnly": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "unixReadWrite": {
+                                                                        "type": "boolean"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "allowedClients",
+                                                                    "chownMode",
+                                                                    "cifs",
+                                                                    "hasRootAccess",
+                                                                    "kerberos5ReadOnly",
+                                                                    "kerberos5ReadWrite",
+                                                                    "kerberos5iReadOnly",
+                                                                    "kerberos5iReadWrite",
+                                                                    "kerberos5pReadOnly",
+                                                                    "kerberos5pReadWrite",
+                                                                    "nfsv3",
+                                                                    "nfsv41",
+                                                                    "ruleIndex",
+                                                                    "unixReadOnly",
+                                                                    "unixReadWrite"
+                                                                ],
+                                                                "type": "object"
+                                                            },
+                                                            "type": "array"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "fileSystemId": {
+                                                    "type": "string"
+                                                },
+                                                "isDefaultQuotaEnabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "isLargeVolume": {
+                                                    "type": "boolean"
+                                                },
+                                                "kerberosEnabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "ldapEnabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "maximumNumberOfFiles": {
+                                                    "type": "integer"
+                                                },
+                                                "mountTargets": {
+                                                    "items": {
+                                                        "properties": {
+                                                            "fileSystemId": {
+                                                                "type": "string"
+                                                            },
+                                                            "ipAddress": {
+                                                                "type": "string"
+                                                            },
+                                                            "mountTargetId": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "fileSystemId",
+                                                            "ipAddress",
+                                                            "mountTargetId"
+                                                        ],
+                                                        "type": "object"
+                                                    },
+                                                    "type": "array"
+                                                },
+                                                "networkFeatures": {
+                                                    "type": "string"
+                                                },
+                                                "networkSiblingSetId": {
+                                                    "type": "string"
+                                                },
+                                                "protocolTypes": {
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "type": "array"
+                                                },
+                                                "provisionedAvailabilityZone": {
+                                                    "type": "string"
+                                                },
+                                                "provisioningState": {
+                                                    "type": "string"
+                                                },
+                                                "securityStyle": {
+                                                    "type": "string"
+                                                },
+                                                "serviceLevel": {
+                                                    "type": "string"
+                                                },
+                                                "smbAccessBasedEnumeration": {
+                                                    "type": "string"
+                                                },
+                                                "smbContinuouslyAvailable": {
+                                                    "type": "boolean"
+                                                },
+                                                "smbEncryption": {
+                                                    "type": "boolean"
+                                                },
+                                                "smbNonBrowsable": {
+                                                    "type": "string"
+                                                },
+                                                "snapshotDirectoryVisible": {
+                                                    "type": "boolean"
+                                                },
+                                                "storageToNetworkProximity": {
+                                                    "type": "string"
+                                                },
+                                                "subnetId": {
+                                                    "type": "string"
+                                                },
+                                                "unixPermissions": {
+                                                    "type": "string"
+                                                },
+                                                "usageThreshold": {
+                                                    "type": "integer"
+                                                },
+                                                "volumeType": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "systemData": {
+                                            "properties": {
+                                                "createdAt": {
+                                                    "type": "string"
+                                                },
+                                                "createdBy": {
+                                                    "type": "string"
+                                                },
+                                                "createdByType": {
+                                                    "type": "string"
+                                                },
+                                                "lastModifiedAt": {
+                                                    "type": "string"
+                                                },
+                                                "lastModifiedBy": {
+                                                    "type": "string"
+                                                },
+                                                "lastModifiedByType": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "tags": {
+                                            "properties": {
+                                                "creator": {
+                                                    "type": "string"
+                                                },
+                                                "product_line": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "zones": {
+                                            "type": "array"
+                                        }
+                                    },
+                                    "required": [
+                                        "etag",
+                                        "id",
+                                        "location",
+                                        "name",
+                                        "properties",
+                                        "systemData",
+                                        "tags",
+                                        "type",
+                                        "zones"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {
+                    "HTTP": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ParseJson"
+            },
+            "User_Configuration_-_Capacity_Pool": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "capacityPool",
+                            "type": "String",
+                            "value": "koa"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "User_Configuration_-_Resource_Group": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "User_Configuration_-_NetApp_Account": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "netappAccount",
+                            "type": "String",
+                            "value": "anf-scus"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "User_Configuration_-_Subscription_ID": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "User_Configuration_-_Resource_Group": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "resourceGroup",
+                            "type": "String",
+                            "value": "southcentral-core.rg"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "User_Configuration_-_NetApp_Account": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "User_Configuration_-_Snapshot_Prefix": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "snapshotPrefix",
+                            "type": "string",
+                            "value": "5min"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "User_Configuration_-_Capacity_Pool": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "User_Configuration_-_Snapshot_Retention": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "snapshotRetention",
+                            "type": "Integer",
+                            "value": 24
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "User_Configuration_-_Snapshot_Prefix": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "User_Configuration_-_Subscription_ID": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "subscriptionId",
+                            "type": "String"
+                        }
+                    ]
+                },
+                "runAfter": {},
+                "type": "InitializeVariable"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {},
+        "triggers": {
+            "Recurrence": {
+                "evaluatedRecurrence": {
+                    "frequency": "Minute",
+                    "interval": 5,
+                    "startTime": "2019-06-27T00:00:00Z",
+                    "timeZone": "Eastern Standard Time"
+                },
+                "recurrence": {
+                    "frequency": "Minute",
+                    "interval": 5,
+                    "startTime": "2019-06-27T00:00:00Z",
+                    "timeZone": "Eastern Standard Time"
+                },
+                "type": "Recurrence"
+            }
+        }
+    },
+    "parameters": {}
+}
