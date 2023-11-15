@@ -28,26 +28,30 @@ Once set the Logic App will takeover the scheduling and rotation of the Snapshot
 ### Select Create
 
   
-  <img width="746" alt="LogicApp Creation" src="https://github.com/ANFTechTeam/Snapshot-Scheduler/assets/63759009/ea18f713-78ec-4f6f-bae5-89636ad62758">
+ <img width="746" alt="LogicApp Creation" src="https://github.com/ANFTechTeam/Snapshot-Scheduler/assets/63759009/0b435ff8-75c9-47f8-a773-e339c48a8e64">
+
 
 
 ### 
 
 ## Open the Logic App and set the System Assigned Idenity for the Security
 
-<img width="1701" alt="System Assigned Identity" src="https://github.com/ANFTechTeam/Snapshot-Scheduler/assets/63759009/ea44821c-3a8a-4ac7-8e58-de539c7c9ca3">
+<img width="1701" alt="System Assigned Identity" src="https://github.com/ANFTechTeam/Snapshot-Scheduler/assets/63759009/72daca10-166c-41ca-9749-a599d2fcc128">
+
 
 
 ### Assign an Azure RBAC utilizing the system assigned managed Identity to the ANF Resource at either the ANF Account or Capacity Pool Resource Level
 
-<img width="1200" alt="Azure RBAC for Logic App" src="https://github.com/ANFTechTeam/Snapshot-Scheduler/assets/63759009/ee1ac3a4-ed2a-46be-9a45-0c4e864f83c6">
+<img width="1200" alt="Azure RBAC for Logic App" src="https://github.com/ANFTechTeam/Snapshot-Scheduler/assets/63759009/bd230feb-f99d-4c1a-a7bb-5aef825ee210">
+
 
 ### 
 ### 
 
 ## Replace the code from the Logic app code view, section with the code in github (https://github.com/ANFTechTeam/Snapshot-Scheduler/SnapshotCode.git)
 
-<img width="1331" alt="Replace Code fromGithub" src="https://github.com/ANFTechTeam/Snapshot-Scheduler/assets/63759009/31bf59e9-50ae-4dab-8788-22222224549c">
+<img width="1331" alt="Replace Code fromGithub" src="https://github.com/ANFTechTeam/Snapshot-Scheduler/assets/63759009/aa989166-05e1-43d6-9ceb-6e7c5c4c957c">
+
 
 
 ###
@@ -55,7 +59,8 @@ Once set the Logic App will takeover the scheduling and rotation of the Snapshot
 
 ## Lastly Open the Designer view in the Logic App and set the Retention Period, Capacity Pool
 
-<img width="1583" alt="Set Retention and Capacity Pool" src="https://github.com/ANFTechTeam/Snapshot-Scheduler/assets/63759009/8bbf69a2-0ba8-4c92-920b-c5b976f9669a">
+<img width="1583" alt="Set Retention and Capacity Pool" src="https://github.com/ANFTechTeam/Snapshot-Scheduler/assets/63759009/8bbd871a-8091-46de-b9e3-680fc9948e83">
+
 
 
 ### 
