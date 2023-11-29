@@ -31,7 +31,7 @@
               }
          },
           "Snapshot Frequency": {
-            "defaultValue": "5",
+            "defaultValue": "5min",
             "type": "String",
             "metadata": {
                 "description": "Frequency for Taking Snapshots"
@@ -53,11 +53,10 @@
             "apiVersion": "2017-07-01",
             "name": "[parameters('Logic App Name')]",
             "location": "[parameters('Location')]",
-            "anfaccount": "[parameters('ANF Account Name')]",
-            "anfcappool": "[parameters('ANF Capacity Pool Name')]",
+            "netappAccount": "[parameters('ANF Account Name')]",
+            "capacityPool": "[parameters('ANF Capacity Pool Name')]",
             "snapshotfreq": "[parameters('Snapshot Frequency')]",
-            "snapshotretain": "[parameters('Snapshot Retention')]"
-            
+            "snapshotRetention": "[parameters('Snapshot Retention')]"
             "identity": {
                 "principalId": "",
                 "tenantId": "",
@@ -941,7 +940,7 @@
                                         {
                                             "name": "netappAccount",
                                             "type": "String",
-                                            "value": "[parameters('ANF Capacity Pool Name')]"
+                                            "value": "[parameters('ANF Account Name')]"
                                         }
                                     ]
                                 },
@@ -1043,3 +1042,5 @@
             }
         ]
     }
+
+                
