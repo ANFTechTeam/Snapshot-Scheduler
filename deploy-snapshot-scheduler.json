@@ -38,7 +38,7 @@
               }
          },
           "Snapshot Retention": {
-            "defaultValue": "48",
+            "defaultValue": "24",
             "type": "String",
             "metadata": {
                 "description": "Number of Snapshots to Retain"
@@ -919,7 +919,7 @@
                                         {
                                             "name": "capacityPool",
                                             "type": "String",
-                                            "value": "koa"
+                                            "value": ""[parameters('ANF Capacity Pool Name')]""
                                         }
                                     ]
                                 },
@@ -936,7 +936,7 @@
                                         {
                                             "name": "netappAccount",
                                             "type": "String",
-                                            "value": "anf-scus"
+                                            "value": "[parameters('ANF Capacity Pool Name')]"
                                         }
                                     ]
                                 },
@@ -953,7 +953,7 @@
                                         {
                                             "name": "resourceGroup",
                                             "type": "String",
-                                            "value": "southcentral-core.rg"
+                                            "value": "[parameters('ANF Account Name')]"
                                         }
                                     ]
                                 },
@@ -987,7 +987,7 @@
                                         {
                                             "name": "snapshotRetention",
                                             "type": "Integer",
-                                            "value": 24
+                                            "value": "[parameters('Snapshot Retention')]"
                                         }
                                     ]
                                 },
@@ -1003,7 +1003,8 @@
                                     "variables": [
                                         {
                                             "name": "subscriptionId",
-                                            "type": "String"
+                                            "type": "string"
+                                            "value": "[parameters('ANF Account Name')]"
                                         }
                                     ]
                                 },
