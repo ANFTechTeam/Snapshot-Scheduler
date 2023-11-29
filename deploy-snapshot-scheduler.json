@@ -1023,13 +1023,13 @@
                             "Recurrence": {
                                 "evaluatedRecurrence": {
                                     "frequency": "Minute",
-                                    "interval": 5,
+                                    "interval": "[parameters('Snapshot Frequency')]",
                                     "startTime": "2019-06-27T00:00:00Z",
                                     "timeZone": "Eastern Standard Time"
                                 },
                                 "recurrence": {
                                     "frequency": "Minute",
-                                    "interval": 5,
+                                    "interval": "[parameters('Snapshot Frequency')]",
                                     "startTime": "2019-06-27T00:00:00Z",
                                     "timeZone": "Eastern Standard Time"
                                 },
