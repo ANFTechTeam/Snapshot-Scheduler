@@ -16,11 +16,32 @@
                 "description": "The location/region where the Logic App will be deployed. Leave as is to deploy to the same region as the containing resource group."
               }
         },
-         "NetApp Account": {
+         "ANF Account Name": {
             "defaultValue": "",
             "type": "String",
             "metadata": {
                 "description": "The Azure NetApp Files Account where the ANF Datastores are located"
+              }
+         },
+          "ANF Capacity Pool Name": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "The Azure NetApp Files Capacity Pool where the ANF Datastores are located"
+              }
+         },
+          "Snapshot Frequency": {
+            "defaultValue": "5",
+            "type": "String",
+            "metadata": {
+                "description": "Frequency for Taking Snapshots"
+              }
+         },
+          "Snapshot Retention": {
+            "defaultValue": "48",
+            "type": "String",
+            "metadata": {
+                "description": "Number of Snapshots to Retain"
               }
          }
         
