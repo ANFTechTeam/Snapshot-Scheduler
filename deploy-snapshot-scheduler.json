@@ -56,7 +56,7 @@
             "netappAccount": "[parameters('ANF Account Name')]",
             "capacityPool": "[parameters('ANF Capacity Pool Name')]",
             "snapshotfreq": "[parameters('Snapshot Frequency')]",
-            "snapshotRetention": "[parameters('Snapshot Retention')]"
+            "snapshotRetention": "[parameters('Snapshot Retention')]",
             "identity": {
                 "principalId": "",
                 "tenantId": "",
