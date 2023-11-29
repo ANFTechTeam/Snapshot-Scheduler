@@ -38,7 +38,7 @@
               }
          },
           "Snapshot Retention": {
-            "defaultValue": "24",
+            "defaultValue": 24,
             "type": "int",
             "metadata": {
                 "description": "Number of Snapshots to Retain"
