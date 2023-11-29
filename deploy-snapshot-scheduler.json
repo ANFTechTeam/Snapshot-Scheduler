@@ -919,7 +919,7 @@
                                         {
                                             "name": "capacityPool",
                                             "type": "String",
-                                            "value": ""[parameters('ANF Capacity Pool Name')]""
+                                            "value": "[parameters('ANF Capacity Pool Name')]"
                                         }
                                     ]
                                 },
@@ -1003,7 +1003,7 @@
                                     "variables": [
                                         {
                                             "name": "subscriptionId",
-                                            "type": "string"
+                                            "type": "string",
                                             "value": "[parameters('ANF Account Name')]"
                                         }
                                     ]
@@ -1038,5 +1038,3 @@
             }
         ]
     }
-
-                
