@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "Logic App Name": {
-            "defaultValue": "Snapshot Sched",
+            "defaultValue": "Snapshot-Sched",
             "type": "String",
             "metadata": {
                 "description": "Choose a name for the Logic App"
