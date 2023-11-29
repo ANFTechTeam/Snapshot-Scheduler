@@ -21,7 +21,7 @@ Once set the Logic App will takeover the scheduling and rotation of the Snapshot
 
 ## Create the Logic App in the Azure Portal
 
-### Go  https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FANFTechTeam%2Snapshot-Scheduler%2blob%2main%2deploy-snapshot-scheduler.json
+### Go  https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FANFTechTeam%2FSnapshot-Scheduler%2Fblob%2Fmain%2Fdeploy-snapshot-scheduler.json
   
 ### Select your Subscription, Resource Group, and Azure Reqion
 
