@@ -4,42 +4,42 @@
     "parameters": {
         "Logic App Name": {
             "defaultValue": "Snapshot-Sched",
-            "type": "String",
+            "type": "string",
             "metadata": {
                 "description": "Choose a name for the Logic App"
             }
         },
          "Location": {
             "defaultValue": "[resourceGroup().location]",
-            "type": "String",
+            "type": "string",
             "metadata": {
                 "description": "The location/region where the Logic App will be deployed. Leave as is to deploy to the same region as the containing resource group."
               }
         },
          "ANF Account Name": {
             "defaultValue": "",
-            "type": "String",
+            "type": "string",
             "metadata": {
                 "description": "The Azure NetApp Files Account where the ANF Datastores are located"
               }
          },
           "ANF Capacity Pool Name": {
             "defaultValue": "",
-            "type": "String",
+            "type": "string",
             "metadata": {
                 "description": "The Azure NetApp Files Capacity Pool where the ANF Datastores are located"
               }
          },
           "Snapshot Frequency": {
             "defaultValue": "5min",
-            "type": "String",
+            "type": "string",
             "metadata": {
                 "description": "Frequency for Taking Snapshots"
               }
          },
           "Snapshot Retention": {
             "defaultValue": "24",
-            "type": "String",
+            "type": "int",
             "metadata": {
                 "description": "Number of Snapshots to Retain"
               }
