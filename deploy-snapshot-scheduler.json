@@ -53,6 +53,11 @@
             "apiVersion": "2017-07-01",
             "name": "[parameters('Logic App Name')]",
             "location": "[parameters('Location')]",
+            "anfaccount": "[parameters('ANF Account Name')]",
+            "anfcappool": "[parameters('ANF Capacity Pool Name')]",
+            "snapshotfreq": "[parameters('Snapshot Frequency')]",
+            "snapshotretain": "[parameters('Snapshot Retention')]"
+            
             "identity": {
                 "principalId": "",
                 "tenantId": "",
